@@ -15,16 +15,10 @@
 		"isolatedModules": true,
 		"strictNullChecks": true,
 		"strictBindCallApply": true,
+		"strict": true,
 		"allowSyntheticDefaultImports": true,
 		"useUnknownInCatchVariables": true,
-		"lib": [
-			"DOM",
-			"ES5",
-			"ES6",
-			"ES7"
-		]
+		"lib": ["DOM", "ES5", "ES6", "ES7"]
 	},
-	"include": [
-		"src/**/*.ts"
-	]
+	"include": ["src/**/*.ts"]
 }

@@ -1,220 +1,201 @@
-# Obsidian community plugin
+# Obsidian 社区插件
 
-## Project overview
+## 项目概览
 
-- Target: Obsidian Community Plugin (TypeScript → bundled JavaScript).
-- Entry point: `main.ts` compiled to `main.js` and loaded by Obsidian.
-- Required release artifacts: `main.js`, `manifest.json`, and optional `styles.css`.
+-   目标：Obsidian 社区插件（TypeScript → 捆绑后的 JavaScript）。
+-   入口点：`main.ts` 编译为 `main.js` 并由 Obsidian 加载。
+-   必需的发布产物：`main.js`、`manifest.json` 以及可选的 `styles.css`。
 
-## Environment & tooling
+## 环境与工具
 
-- Node.js: use current LTS (Node 18+ recommended).
-- **Package manager: npm** (required for this sample - `package.json` defines npm scripts and dependencies).
-- **Bundler: esbuild** (required for this sample - `esbuild.config.mjs` and build scripts depend on it). Alternative bundlers like Rollup or webpack are acceptable for other projects if they bundle all external dependencies into `main.js`.
-- Types: `obsidian` type definitions.
-
-**Note**: This sample project has specific technical dependencies on npm and esbuild. If you're creating a plugin from scratch, you can choose different tools, but you'll need to replace the build configuration accordingly.
-
-### Install
-
-```bash
-npm install
-```
-
-### Dev (watch)
-
-```bash
-npm run dev
-```
-
-### Production build
-
-```bash
-npm run build
-```
+-   Node.js：使用当前 LTS 版本（推荐 Node 18+）。
+-   **包管理器：npm**（本项目必需 - `package.json` 定义了脚本和依赖）。
+-   **构建工具：esbuild**（本项目必需 - 依赖 `esbuild.config.mjs`）。
+-   类型定义：`obsidian` 类型定义。
 
 ## Linting
 
-- To use eslint install eslint from terminal: `npm install -g eslint`
-- To use eslint to analyze this project use this command: `eslint main.ts`
-- eslint will then create a report with suggestions for code improvement by file and line number.
-- If your source code is in a folder, such as `src`, you can use eslint with this command to analyze all files in that folder: `eslint ./src/`
+-   使用 `eslint main.ts` 分析项目。
+-   如果源码在文件夹中（如 `src`），使用 `eslint ./src/`。
 
-## File & folder conventions
+## 文件与文件夹规范
 
-- **Organize code into multiple files**: Split functionality across separate modules rather than putting everything in `main.ts`.
-- Source lives in `src/`. Keep `main.ts` small and focused on plugin lifecycle (loading, unloading, registering commands).
-- **Example file structure**:
-  ```
-  src/
-    main.ts           # Plugin entry point, lifecycle management
-    settings.ts       # Settings interface and defaults
-    commands/         # Command implementations
-      command1.ts
-      command2.ts
-    ui/              # UI components, modals, views
-      modal.ts
-      view.ts
-    utils/           # Utility functions, helpers
-      helpers.ts
-      constants.ts
-    types.ts         # TypeScript interfaces and types
-  ```
-- **Do not commit build artifacts**: Never commit `node_modules/`, `main.js`, or other generated files to version control.
-- Keep the plugin small. Avoid large dependencies. Prefer browser-compatible packages.
-- Generated output should be placed at the plugin root or `dist/` depending on your build setup. Release artifacts must end up at the top level of the plugin folder in the vault (`main.js`, `manifest.json`, `styles.css`).
+-   **多文件组织代码**：将功能拆分到不同模块，不要全部写在 `main.ts` 中。
+-   源码存放在 `src/`。保持 `main.ts` 精简，仅负责插件生命周期。
+-   **示例文件结构**：
+    ```
+    src/
+      main.ts           # 插件入口，生命周期管理
+      settings.ts       # 设置接口与默认值
+      commands/         # 命令实现
+      ui/              # UI 组件、模态框、视图
+      utils/           # 工具函数、常量
+      types.ts         # TypeScript 接口与类型
+    ```
+-   **不要提交构建产物**：切勿将 `node_modules/` 或 `main.js` 提交到版本控制。
+-   保持插件精简。避免引入大型依赖。优先选择与浏览器兼容的包。
+-   生成的输出应放在插件根目录或 `dist/` 文件夹中，具体取决于构建设置。发布产物必须位于库中插件文件夹的顶层（`main.js`、`manifest.json`、`styles.css`）。
 
-## Manifest rules (`manifest.json`)
+## 清单规则 (`manifest.json`)
 
-- Must include (non-exhaustive):  
-  - `id` (plugin ID; for local dev it should match the folder name)  
-  - `name`  
-  - `version` (Semantic Versioning `x.y.z`)  
-  - `minAppVersion`  
-  - `description`  
-  - `isDesktopOnly` (boolean)  
-  - Optional: `author`, `authorUrl`, `fundingUrl` (string or map)
-- Never change `id` after release. Treat it as stable API.
-- Keep `minAppVersion` accurate when using newer APIs.
-- Canonical requirements are coded here: https://github.com/obsidianmd/obsidian-releases/blob/master/.github/workflows/validate-plugin-entry.yml
+-   必须包含（非详尽）：
+    -   `id`（插件 ID；对于本地开发，应与文件夹名称匹配）
+    -   `name`
+    -   `version`（语义版本 `x.y.z`）
+    -   `minAppVersion`
+    -   `description`
+    -   `isDesktopOnly`（布尔值）
+    -   可选：`author`、`authorUrl`、`fundingUrl`（字符串或映射）
+-   发布后切勿更改 `id`。将其视为稳定的 API。
+-   使用新 API 时，保持 `minAppVersion` 的准确性。
+-   规范要求已在此编码： https://github.com/obsidianmd/obsidian-releases/blob/master/.github/workflows/validate-plugin-entry.yml
 
-## Testing
+## 测试
 
-- Manual install for testing: copy `main.js`, `manifest.json`, `styles.css` (if any) to:
-  ```
-  <Vault>/.obsidian/plugins/<plugin-id>/
-  ```
-- Reload Obsidian and enable the plugin in **Settings → Community plugins**.
+-   手动安装以进行测试：将 `main.js`、`manifest.json`、`styles.css`（如有）复制到：
+    ```
+    <Vault>/.obsidian/plugins/<plugin-id>/
+    ```
+-   重新加载 Obsidian 并在 **设置 → 社区插件** 中启用插件。
 
-## Commands & settings
+## 命令与设置
 
-- Any user-facing commands should be added via `this.addCommand(...)`.
-- If the plugin has configuration, provide a settings tab and sensible defaults.
-- Persist settings using `this.loadData()` / `this.saveData()`.
-- Use stable command IDs; avoid renaming once released.
+-   使用 `this.addCommand(...)` 添加用户面向的命令。
+-   如果插件有配置，提供设置选项卡和合理的默认值。
+-   使用 `this.loadData()` / `this.saveData()` 持久化设置。
+-   使用稳定的命令 ID；发布后避免重命名。
 
-## Versioning & releases
+## 版本控制与发布
 
-- Bump `version` in `manifest.json` (SemVer) and update `versions.json` to map plugin version → minimum app version.
-- Create a GitHub release whose tag exactly matches `manifest.json`'s `version`. Do not use a leading `v`.
-- Attach `manifest.json`, `main.js`, and `styles.css` (if present) to the release as individual assets.
-- After the initial release, follow the process to add/update your plugin in the community catalog as required.
+-   在 `manifest.json` 中提升 `version`（语义化版本）并更新 `versions.json`，以映射插件版本与最低应用版本。
+-   创建一个 GitHub 发布，其标签与 `manifest.json` 中的 `version` 完全匹配。不要使用前导 `v`。
+-   将 `manifest.json`、`main.js` 和 `styles.css`（如有）作为单独的资产附加到发布中。
+-   初始发布后，按照需要的过程添加/更新社区目录中的插件。
 
-## Security, privacy, and compliance
+## 安全、隐私与合规
 
-Follow Obsidian's **Developer Policies** and **Plugin Guidelines**. In particular:
+遵循 Obsidian 的 **开发者政策** 和 **插件指南**。特别是：
 
-- Default to local/offline operation. Only make network requests when essential to the feature.
-- No hidden telemetry. If you collect optional analytics or call third-party services, require explicit opt-in and document clearly in `README.md` and in settings.
-- Never execute remote code, fetch and eval scripts, or auto-update plugin code outside of normal releases.
-- Minimize scope: read/write only what's necessary inside the vault. Do not access files outside the vault.
-- Clearly disclose any external services used, data sent, and risks.
-- Respect user privacy. Do not collect vault contents, filenames, or personal information unless absolutely necessary and explicitly consented.
-- Avoid deceptive patterns, ads, or spammy notifications.
-- Register and clean up all DOM, app, and interval listeners using the provided `register*` helpers so the plugin unloads safely.
+-   默认本地/离线运行。仅在必要时发起网络请求。
+-   禁止隐藏遥测。如果收集分析数据，必须明确告知并要求用户选择加入（opt-in）。
+-   严禁执行远程代码或 fetch 后 eval 脚本。
+-   最小化权限：仅访问库内必要文件。
+-   清楚披露所使用的外部服务、发送的数据和风险。
+-   尊重用户隐私。除非绝对必要并明确获得同意，否则不收集库内容、文件名或个人信息。
+-   避免欺骗性模式、广告或垃圾邮件通知。
+-   使用提供的 `register*` 助手注册和清理所有 DOM、应用和间隔监听器，以便插件安全卸载。
 
-## UX & copy guidelines (for UI text, commands, settings)
+## 用户体验与文案指南（针对 UI 文本、命令、设置）
 
-- Prefer sentence case for headings, buttons, and titles.
-- Use clear, action-oriented imperatives in step-by-step copy.
-- Use **bold** to indicate literal UI labels. Prefer "select" for interactions.
-- Use arrow notation for navigation: **Settings → Community plugins**.
-- Keep in-app strings short, consistent, and free of jargon.
+-   标题、按钮和标题使用句子首字母大写。
+-   使用清晰、面向操作的命令式语气。
+-   使用 **粗体** 指示字面 UI 标签。交互时更喜欢使用 "select"。
+-   导航使用箭头表示： **设置 → 社区插件**。
+-   保持应用内字符串简短、一致且无行话。
 
-## Performance
+## 性能
 
-- Keep startup light. Defer heavy work until needed.
-- Avoid long-running tasks during `onload`; use lazy initialization.
-- Batch disk access and avoid excessive vault scans.
-- Debounce/throttle expensive operations in response to file system events.
+-   启动时保持轻量。推迟重型工作，直到需要时再执行。
+-   避免在 `onload` 中执行长时间运行的任务；使用惰性初始化。
+-   批量磁盘访问，避免过度扫描库。
+-   在响应文件系统事件时，防抖/节流耗时操作。
 
-## Coding conventions
+## 编码规范
 
-- TypeScript with `"strict": true` preferred.
-- **Keep `main.ts` minimal**: Focus only on plugin lifecycle (onload, onunload, addCommand calls). Delegate all feature logic to separate modules.
-- **Split large files**: If any file exceeds ~200-300 lines, consider breaking it into smaller, focused modules.
-- **Use clear module boundaries**: Each file should have a single, well-defined responsibility.
-- Bundle everything into `main.js` (no unbundled runtime deps).
-- Avoid Node/Electron APIs if you want mobile compatibility; set `isDesktopOnly` accordingly.
-- Prefer `async/await` over promise chains; handle errors gracefully.
+-   推荐使用 TypeScript 严格模式 (`"strict": true`)。
+-   **保持 `main.ts` 最小化**：仅关注生命周期（onload, onunload）。
+-   **拆分大文件**：如果文件超过 200-300 行，考虑拆分。
+-   **使用清晰的模块边界**：每个文件应有单一、明确的职责。
+-   将所有内容捆绑到 `main.js` 中（没有未捆绑的运行时依赖）。
+-   如果希望兼容移动设备，避免使用 Node/Electron API；相应设置 `isDesktopOnly`。
+-   优先使用 `async/await` 而非 Promise 链；优雅地处理错误。
 
-## Mobile
+## 移动端
 
-- Where feasible, test on iOS and Android.
-- Don't assume desktop-only behavior unless `isDesktopOnly` is `true`.
-- Avoid large in-memory structures; be mindful of memory and storage constraints.
+-   尽可能在 iOS 和 Android 上测试。
+-   除非 `isDesktopOnly` 为 `true`，否则不要假设仅限桌面的行为。
+-   避免在内存中使用大型结构；注意内存和存储限制。
 
-## Agent do/don't
+## Agent 做与不做
 
-**Do**
-- Add commands with stable IDs (don't rename once released).
-- Provide defaults and validation in settings.
-- Write idempotent code paths so reload/unload doesn't leak listeners or intervals.
-- Use `this.register*` helpers for everything that needs cleanup.
+**要做 (Do)**
 
-**Don't**
-- Introduce network calls without an obvious user-facing reason and documentation.
-- Ship features that require cloud services without clear disclosure and explicit opt-in.
-- Store or transmit vault contents unless essential and consented.
+-   添加具有稳定 ID 的命令。
+-   在设置中提供默认值和验证。
+-   编写幂等代码路径，以便重新加载/卸载时不会泄漏监听器或间隔。
+-   对所有需要清理的内容使用 `this.register*` 助手。
 
-## Common tasks
+**不要做 (Don't)**
 
-### Organize code across multiple files
+-   在没有明确理由的情况下引入网络调用。
+-   在未披露的情况下使用云服务。
+-   存储或传输库内容，除非是核心功能必需且已获授权。
 
-**main.ts** (minimal, lifecycle only):
+## 常见任务
+
+### 多文件组织代码示例
+
+**main.ts**（最小化，仅生命周期）：
+
 ```ts
 import { Plugin } from "obsidian";
 import { MySettings, DEFAULT_SETTINGS } from "./settings";
 import { registerCommands } from "./commands";
 
 export default class MyPlugin extends Plugin {
-  settings: MySettings;
+	settings: MySettings;
 
-  async onload() {
-    this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
-    registerCommands(this);
-  }
+	async onload() {
+		this.settings = Object.assign(
+			{},
+			DEFAULT_SETTINGS,
+			await this.loadData()
+		);
+		registerCommands(this);
+	}
 }
 ```
 
-**settings.ts**:
+**settings.ts**：
+
 ```ts
 export interface MySettings {
-  enabled: boolean;
-  apiKey: string;
+	enabled: boolean;
+	apiKey: string;
 }
 
 export const DEFAULT_SETTINGS: MySettings = {
-  enabled: true,
-  apiKey: "",
+	enabled: true,
+	apiKey: "",
 };
 ```
 
-**commands/index.ts**:
+**commands/index.ts**：
+
 ```ts
 import { Plugin } from "obsidian";
 import { doSomething } from "./my-command";
 
 export function registerCommands(plugin: Plugin) {
-  plugin.addCommand({
-    id: "do-something",
-    name: "Do something",
-    callback: () => doSomething(plugin),
-  });
+	plugin.addCommand({
+		id: "do-something",
+		name: "Do something",
+		callback: () => doSomething(plugin),
+	});
 }
 ```
 
-### Add a command
+### 添加命令
 
 ```ts
 this.addCommand({
-  id: "your-command-id",
-  name: "Do the thing",
-  callback: () => this.doTheThing(),
+	id: "your-command-id",
+	name: "Do the thing",
+	callback: () => this.doTheThing(),
 });
 ```
 
-### Persist settings
+### 持久化设置
 
 ```ts
 interface MySettings { enabled: boolean }
@@ -226,26 +207,36 @@ async onload() {
 }
 ```
 
-### Register listeners safely
+### 安全注册监听器
 
 ```ts
-this.registerEvent(this.app.workspace.on("file-open", f => { /* ... */ }));
-this.registerDomEvent(window, "resize", () => { /* ... */ });
-this.registerInterval(window.setInterval(() => { /* ... */ }, 1000));
+this.registerEvent(
+	this.app.workspace.on("file-open", (f) => {
+		/* ... */
+	})
+);
+this.registerDomEvent(window, "resize", () => {
+	/* ... */
+});
+this.registerInterval(
+	window.setInterval(() => {
+		/* ... */
+	}, 1000)
+);
 ```
 
-## Troubleshooting
+## 疑难解答
 
-- Plugin doesn't load after build: ensure `main.js` and `manifest.json` are at the top level of the plugin folder under `<Vault>/.obsidian/plugins/<plugin-id>/`. 
-- Build issues: if `main.js` is missing, run `npm run build` or `npm run dev` to compile your TypeScript source code.
-- Commands not appearing: verify `addCommand` runs after `onload` and IDs are unique.
-- Settings not persisting: ensure `loadData`/`saveData` are awaited and you re-render the UI after changes.
-- Mobile-only issues: confirm you're not using desktop-only APIs; check `isDesktopOnly` and adjust.
+-   插件在构建后不加载：确保 `main.js` 和 `manifest.json` 位于 `<Vault>/.obsidian/plugins/<plugin-id>/` 的插件文件夹顶层。
+-   构建问题：如果缺少 `main.js`，请运行 `npm run build` 或 `npm run dev` 来编译 TypeScript 源代码。
+-   命令未出现：验证 `addCommand` 是否在 `onload` 之后运行，且 ID 唯一。
+-   设置未持久化：确保 `loadData`/`saveData` 已被等待，并且在更改后重新渲染 UI。
+-   仅限移动的问题：确认未使用仅限桌面的 API；检查 `isDesktopOnly` 并进行调整。
 
-## References
+## 参考文献
 
-- Obsidian sample plugin: https://github.com/obsidianmd/obsidian-sample-plugin
-- API documentation: https://docs.obsidian.md
-- Developer policies: https://docs.obsidian.md/Developer+policies
-- Plugin guidelines: https://docs.obsidian.md/Plugins/Releasing/Plugin+guidelines
-- Style guide: https://help.obsidian.md/style-guide
+-   Obsidian 示例插件： https://github.com/obsidianmd/obsidian-sample-plugin
+-   API 文档： https://docs.obsidian.md
+-   开发者政策： https://docs.obsidian.md/Developer+policies
+-   插件指南： https://docs.obsidian.md/Plugins/Releasing/Plugin+guidelines
+-   风格指南： https://help.obsidian.md/style-guide
