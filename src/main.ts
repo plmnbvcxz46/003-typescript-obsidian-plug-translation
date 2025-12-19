@@ -1,23 +1,24 @@
 import { Editor, Plugin } from "obsidian";
+import { Notice } from "obsidian";
 // 引入设置相关的定义（虽然我们还没改 settings.ts，但先留着不报错）
 import {
 	DEFAULT_SETTINGS,
-	MyPluginSettings,
-	SampleSettingTab,
+	SmartSelectSettings,
+	SmartSelectSettingTap,
 } from "./settings";
 
-export default class MyPlugin extends Plugin {
-	settings: MyPluginSettings;
+export default class SmartSelectPlugin extends Plugin {
+	settings!: SmartSelectSettings;
 
 	// 插件加载时执行（相当于游戏的“开始游戏”）
 	async onload() {
 		await this.loadSettings();
 
 		// --- 我们的代码将写在这里 ---
-		console.log("我的插件加载啦！");
+		new Notice("Successfully loding");
 
 		// 添加设置页（暂时留着）
-		this.addSettingTab(new SampleSettingTab(this.app, this));
+		this.addSettingTab(new SmartSelectSettingTap(this.app, this));
 	}
 
 	// 插件关闭时执行
@@ -30,7 +31,7 @@ export default class MyPlugin extends Plugin {
 		this.settings = Object.assign(
 			{},
 			DEFAULT_SETTINGS,
-			await this.loadData()
+			(await this.loadData()) as SmartSelectSettings
 		);
 	}
 
