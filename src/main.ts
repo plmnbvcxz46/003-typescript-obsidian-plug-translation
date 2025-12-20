@@ -10,6 +10,7 @@ import {
 export default class SmartSelectPlugin extends Plugin {
 	settings!: SmartSelectSettings;
 	selectionHistory: EditorRange[] = [];
+	lastSelectionSnap: string = "";
 	// 插件加载时执行（相当于游戏的“开始游戏”）
 	async onload() {
 		await this.loadSettings();
@@ -56,14 +57,16 @@ export default class SmartSelectPlugin extends Plugin {
 		await this.saveData(this.settings);
 	}
 
-	//获取选区
-
 	// 选区
 	expandSelection(editor: Editor) {
 		const selection = editor.getSelection();
 		const cursor = editor.getCursor();
 		const wordRange = editor.wordAt(cursor);
 		const sentenceRange = this.selectSentence(editor, cursor);
+		if (this.lastSelectionSnap != this.getRangeString(editor)) {
+			this.selectionHistory = [];
+		}
+
 		const lineRange: EditorRange = {
 			from: {
 				line: cursor.line,
@@ -76,28 +79,41 @@ export default class SmartSelectPlugin extends Plugin {
 		};
 		if (!wordRange) {
 			new Notice("No words");
+			return;
 		} else if (selection.length < wordRange.to.ch - wordRange.from.ch) {
+			this.selectionHistory.push({ from: cursor, to: cursor });
 			editor.setSelection(wordRange.from, wordRange.to);
-			this.selectionHistory.push(wordRange);
 		} else if (
 			selection.length <
 			sentenceRange.to.ch - sentenceRange.from.ch
 		) {
+			this.selectionHistory.push(wordRange);
 			editor.setSelection(sentenceRange.from, sentenceRange.to);
-			this.selectionHistory.push(sentenceRange);
 		} else {
+			this.selectionHistory.push(sentenceRange);
 			editor.setSelection(lineRange.from, lineRange.to);
-			this.selectionHistory.push(lineRange);
 		}
+		this.lastSelectionSnap = this.getRangeString(editor);
 	}
+
+	getRangeString(editor: Editor): string {
+		const from = editor.getCursor("from");
+		const to = editor.getCursor("to");
+		return `${from.line}:${from.ch}-${to.line}:${to.ch}`;
+	}
+
 	//收缩选区
 	shrinkSelection(editor: Editor) {
+		if (this.lastSelectionSnap != this.getRangeString(editor)) {
+			this.selectionHistory = [];
+		}
 		const selectionRange = this.selectionHistory.pop();
 		if (selectionRange === undefined) {
 			new Notice("No minor selection");
 			return;
 		}
 		editor.setSelection(selectionRange.from, selectionRange.to);
+		this.lastSelectionSnap = this.getRangeString(editor);
 	}
 
 	selectSentence(editor: Editor, cursor: EditorPosition): EditorRange {
