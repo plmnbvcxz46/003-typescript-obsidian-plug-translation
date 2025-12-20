@@ -9,7 +9,7 @@ import {
 
 export default class SmartSelectPlugin extends Plugin {
 	settings!: SmartSelectSettings;
-
+	selectionHistory: EditorRange[] = [];
 	// 插件加载时执行（相当于游戏的“开始游戏”）
 	async onload() {
 		await this.loadSettings();
@@ -22,10 +22,17 @@ export default class SmartSelectPlugin extends Plugin {
 
 		// 添加功能
 		this.addCommand({
-			id: "smart_select",
-			name: "Smart select",
-			editorCallback: (editor: Editor, ctx) => {
+			id: "expand_selection",
+			name: "Expand selection",
+			editorCallback: (editor: Editor) => {
 				this.expandSelection(editor);
+			},
+		});
+		this.addCommand({
+			id: "shrink_selection",
+			name: "Shrink selection",
+			editorCallback: (editor: Editor) => {
+				this.shrinkSelection(editor);
 			},
 		});
 	}
@@ -49,19 +56,48 @@ export default class SmartSelectPlugin extends Plugin {
 		await this.saveData(this.settings);
 	}
 
+	//获取选区
+
 	// 选区
 	expandSelection(editor: Editor) {
 		const selection = editor.getSelection();
 		const cursor = editor.getCursor();
 		const wordRange = editor.wordAt(cursor);
 		const sentenceRange = this.selectSentence(editor, cursor);
+		const lineRange: EditorRange = {
+			from: {
+				line: cursor.line,
+				ch: 0,
+			},
+			to: {
+				line: cursor.line,
+				ch: editor.getLine(cursor.line).length,
+			},
+		};
 		if (!wordRange) {
 			new Notice("No words");
 		} else if (selection.length < wordRange.to.ch - wordRange.from.ch) {
 			editor.setSelection(wordRange.from, wordRange.to);
-		} else {
+			this.selectionHistory.push(wordRange);
+		} else if (
+			selection.length <
+			sentenceRange.to.ch - sentenceRange.from.ch
+		) {
 			editor.setSelection(sentenceRange.from, sentenceRange.to);
+			this.selectionHistory.push(sentenceRange);
+		} else {
+			editor.setSelection(lineRange.from, lineRange.to);
+			this.selectionHistory.push(lineRange);
 		}
+	}
+	//收缩选区
+	shrinkSelection(editor: Editor) {
+		const selectionRange = this.selectionHistory.pop();
+		if (selectionRange === undefined) {
+			new Notice("No minor selection");
+			return;
+		}
+		editor.setSelection(selectionRange.from, selectionRange.to);
 	}
 
 	selectSentence(editor: Editor, cursor: EditorPosition): EditorRange {
@@ -82,6 +118,10 @@ export default class SmartSelectPlugin extends Plugin {
 			}
 			end++;
 		}
+
+		while (start < cursor.ch && /\s/.test(lineText.charAt(start))) {
+			start++;
+		}
 		return {
 			from: {
 				line: cursor.line,
@@ -89,7 +129,7 @@ export default class SmartSelectPlugin extends Plugin {
 			},
 			to: {
 				line: cursor.line,
-				ch: start,
+				ch: end,
 			},
 		};
 	}
