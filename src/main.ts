@@ -183,7 +183,6 @@ export default class SmartSelectPlugin extends Plugin {
 		const cursor = editor.getCursor("from");
 		const selection = editor.getSelection();
 		const wordRange = editor.wordAt(cursor);
-		const sentenceRange = this.selectSentence(editor, cursor);
 		let start: EditorPosition = wordRange
 			? { ...wordRange.from }
 			: { ...cursor };
@@ -212,16 +211,6 @@ export default class SmartSelectPlugin extends Plugin {
 			selection.length <= wordRange.to.ch - wordRange.from.ch
 		) {
 			this.expandSelection(editor);
-		} else if (
-			selection.length <=
-			sentenceRange.to.ch - sentenceRange.from.ch
-		) {
-			this.expandSelection(editor);
-			this.expandSelection(editor);
-		} else {
-			this.expandSelection(editor);
-			this.expandSelection(editor);
-			this.expandSelection(editor);
 		}
 		this.selectionHistory = [];
 	}
@@ -229,7 +218,6 @@ export default class SmartSelectPlugin extends Plugin {
 		const cursor = editor.getCursor("to");
 		const selection = editor.getSelection();
 		const wordRange = editor.wordAt(cursor);
-		const sentenceRange = this.selectSentence(editor, cursor);
 		let end: EditorPosition = wordRange
 			? { ...wordRange.to }
 			: { ...cursor };
@@ -249,7 +237,10 @@ export default class SmartSelectPlugin extends Plugin {
 			const lineText = editor.getLine(end.line);
 			const char = lineText.charAt(end.ch);
 			new Notice(char);
-			if (/\w|[\u4e00-\u9fa5]/.test(char)) break;
+			if (/\w|[\u4e00-\u9fa5]/.test(char)) {
+				new Notice(char);
+				break;
+			}
 		}
 
 		editor.setCursor(end);
@@ -257,16 +248,6 @@ export default class SmartSelectPlugin extends Plugin {
 			wordRange &&
 			selection.length <= wordRange.to.ch - wordRange.from.ch
 		) {
-			this.expandSelection(editor);
-		} else if (
-			selection.length <=
-			sentenceRange.to.ch - sentenceRange.from.ch
-		) {
-			this.expandSelection(editor);
-			this.expandSelection(editor);
-		} else {
-			this.expandSelection(editor);
-			this.expandSelection(editor);
 			this.expandSelection(editor);
 		}
 		this.selectionHistory = [];
