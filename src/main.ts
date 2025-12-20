@@ -191,11 +191,6 @@ export default class SmartSelectPlugin extends Plugin {
 			const char = lineText.charAt(start);
 			if (/\w|[\u4e00-\u9fa5]/.test(char)) break;
 		}
-		while (start > 0) {
-			const char = lineText.charAt(start);
-			if (/\w|[\u4e00-\u9fa5]/.test(char)) start--;
-			else break;
-		}
 		editor.setCursor({ ...cursor, ch: start });
 		if (
 			wordRange &&
