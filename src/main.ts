@@ -36,6 +36,20 @@ export default class SmartSelectPlugin extends Plugin {
 				this.shrinkSelection(editor);
 			},
 		});
+		this.addCommand({
+			id: "select_pre",
+			name: "Select pre",
+			editorCallback: (editor) => {
+				this.selectPre(editor);
+			},
+		});
+		this.addCommand({
+			id: "select_next",
+			name: "Select next",
+			editorCallback: (editor) => {
+				this.selectNext(editor);
+			},
+		});
 	}
 
 	// 插件关闭时执行
@@ -86,7 +100,7 @@ export default class SmartSelectPlugin extends Plugin {
 			wordRange &&
 			selection.length < wordRange.to.ch - wordRange.from.ch
 		) {
-			this.selectionHistory.push({ from: cursor, to: cursor });
+			this.selectionHistory.push(currentRange);
 			editor.setSelection(wordRange.from, wordRange.to);
 			new Notice("Word");
 		} else if (
@@ -162,5 +176,77 @@ export default class SmartSelectPlugin extends Plugin {
 		const rightChar = lineText.charAt(cursor.ch);
 		const chineseRegex = /[\u4e00-\u9fa5]/;
 		return chineseRegex.test(rightChar);
+	}
+
+	//切换选区
+	selectPre(editor: Editor) {
+		const cursor = editor.getCursor("to");
+		const lineText = editor.getLine(cursor.line);
+		const selection = editor.getSelection();
+		const wordRange = editor.wordAt(cursor);
+		const sentenceRange = this.selectSentence(editor, cursor);
+		let start = wordRange ? wordRange.from.ch : cursor.ch;
+		while (start > 0) {
+			start--;
+			const char = lineText.charAt(start);
+			if (/\w|[\u4e00-\u9fa5]/.test(char)) break;
+		}
+		while (start > 0) {
+			const char = lineText.charAt(start);
+			if (/\w|[\u4e00-\u9fa5]/.test(char)) start--;
+			else break;
+		}
+		editor.setCursor({ ...cursor, ch: start });
+		if (
+			wordRange &&
+			selection.length <= wordRange.to.ch - wordRange.from.ch
+		) {
+			this.expandSelection(editor);
+		} else if (
+			selection.length <=
+			sentenceRange.to.ch - sentenceRange.from.ch
+		) {
+			this.expandSelection(editor);
+			this.expandSelection(editor);
+		} else {
+			if (cursor.line <= 0) return;
+			editor.setCursor({ line: cursor.line - 1, ch: 0 });
+			this.expandSelection(editor);
+			this.expandSelection(editor);
+			this.expandSelection(editor);
+		}
+		this.selectionHistory = [];
+	}
+	selectNext(editor: Editor) {
+		const cursor = editor.getCursor("to");
+		const lineText = editor.getLine(cursor.line);
+		const selection = editor.getSelection();
+		const wordRange = editor.wordAt(cursor);
+		const sentenceRange = this.selectSentence(editor, cursor);
+		let end = wordRange ? wordRange.to.ch : cursor.ch;
+		while (end < lineText.length) {
+			end++;
+			const char = lineText.charAt(end);
+			if (/\w|[\u4e00-\u9fa5]/.test(char)) break;
+		}
+		editor.setCursor({ ...cursor, ch: end });
+		if (
+			wordRange &&
+			selection.length <= wordRange.to.ch - wordRange.from.ch
+		) {
+			this.expandSelection(editor);
+		} else if (
+			selection.length <=
+			sentenceRange.to.ch - sentenceRange.from.ch
+		) {
+			this.expandSelection(editor);
+			this.expandSelection(editor);
+		} else {
+			if (cursor.line === editor.lastLine()) return;
+			editor.setCursor({ line: cursor.line + 1, ch: 0 });
+			this.expandSelection(editor);
+			this.expandSelection(editor);
+			this.expandSelection(editor);
+		}
 	}
 }
