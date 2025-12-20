@@ -66,7 +66,10 @@ export default class SmartSelectPlugin extends Plugin {
 		if (this.lastSelectionSnap != this.getRangeString(editor)) {
 			this.selectionHistory = [];
 		}
-
+		const currentRange: EditorRange = {
+			from: editor.getCursor("from"),
+			to: editor.getCursor("to"),
+		};
 		const lineRange: EditorRange = {
 			from: {
 				line: cursor.line,
@@ -87,10 +90,10 @@ export default class SmartSelectPlugin extends Plugin {
 			selection.length <
 			sentenceRange.to.ch - sentenceRange.from.ch
 		) {
-			this.selectionHistory.push(wordRange);
+			this.selectionHistory.push(currentRange);
 			editor.setSelection(sentenceRange.from, sentenceRange.to);
 		} else {
-			this.selectionHistory.push(sentenceRange);
+			this.selectionHistory.push(currentRange);
 			editor.setSelection(lineRange.from, lineRange.to);
 		}
 		this.lastSelectionSnap = this.getRangeString(editor);
