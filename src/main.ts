@@ -60,9 +60,10 @@ export default class SmartSelectPlugin extends Plugin {
 	// 选区
 	expandSelection(editor: Editor) {
 		const selection = editor.getSelection();
-		const cursor = editor.getCursor();
+		const cursor = editor.getCursor("from");
 		const wordRange = editor.wordAt(cursor);
 		const sentenceRange = this.selectSentence(editor, cursor);
+		const isChinese = this.isChinese(editor, cursor);
 		if (this.lastSelectionSnap != this.getRangeString(editor)) {
 			this.selectionHistory = [];
 		}
@@ -80,19 +81,23 @@ export default class SmartSelectPlugin extends Plugin {
 				ch: editor.getLine(cursor.line).length,
 			},
 		};
-		if (!wordRange) {
-			new Notice("No words");
-			return;
-		} else if (selection.length < wordRange.to.ch - wordRange.from.ch) {
+		if (
+			!isChinese &&
+			wordRange &&
+			selection.length < wordRange.to.ch - wordRange.from.ch
+		) {
 			this.selectionHistory.push({ from: cursor, to: cursor });
 			editor.setSelection(wordRange.from, wordRange.to);
+			new Notice("Word");
 		} else if (
 			selection.length <
 			sentenceRange.to.ch - sentenceRange.from.ch
 		) {
+			new Notice("Sentence");
 			this.selectionHistory.push(currentRange);
 			editor.setSelection(sentenceRange.from, sentenceRange.to);
 		} else {
+			new Notice("Line");
 			this.selectionHistory.push(currentRange);
 			editor.setSelection(lineRange.from, lineRange.to);
 		}
@@ -151,5 +156,11 @@ export default class SmartSelectPlugin extends Plugin {
 				ch: end,
 			},
 		};
+	}
+	isChinese(editor: Editor, cursor: EditorPosition) {
+		const lineText = editor.getLine(cursor.line);
+		const rightChar = lineText.charAt(cursor.ch);
+		const chineseRegex = /[\u4e00-\u9fa5]/;
+		return chineseRegex.test(rightChar);
 	}
 }
