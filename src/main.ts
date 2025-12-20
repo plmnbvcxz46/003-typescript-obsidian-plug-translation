@@ -180,18 +180,33 @@ export default class SmartSelectPlugin extends Plugin {
 
 	//切换选区
 	selectPre(editor: Editor) {
-		const cursor = editor.getCursor("to");
-		const lineText = editor.getLine(cursor.line);
+		const cursor = editor.getCursor("from");
 		const selection = editor.getSelection();
 		const wordRange = editor.wordAt(cursor);
 		const sentenceRange = this.selectSentence(editor, cursor);
-		let start = wordRange ? wordRange.from.ch : cursor.ch;
-		while (start > 0) {
-			start--;
-			const char = lineText.charAt(start);
+		let start: EditorPosition = wordRange
+			? { ...wordRange.from }
+			: { ...cursor };
+		while (start.line >= 0) {
+			start.ch--;
+			if (start.ch < 0) {
+				start.line--;
+				start.ch = editor.getLine(
+					start.line >= 0 ? start.line : 0
+				).length;
+			}
+			if (start.line < 0) {
+				start = {
+					line: 0,
+					ch: 0,
+				};
+				return;
+			}
+			const lineText = editor.getLine(start.line);
+			const char = lineText.charAt(start.ch);
 			if (/\w|[\u4e00-\u9fa5]/.test(char)) break;
 		}
-		editor.setCursor({ ...cursor, ch: start });
+		editor.setCursor(start);
 		if (
 			wordRange &&
 			selection.length <= wordRange.to.ch - wordRange.from.ch
@@ -204,8 +219,6 @@ export default class SmartSelectPlugin extends Plugin {
 			this.expandSelection(editor);
 			this.expandSelection(editor);
 		} else {
-			if (cursor.line <= 0) return;
-			editor.setCursor({ line: cursor.line - 1, ch: 0 });
 			this.expandSelection(editor);
 			this.expandSelection(editor);
 			this.expandSelection(editor);
@@ -214,17 +227,32 @@ export default class SmartSelectPlugin extends Plugin {
 	}
 	selectNext(editor: Editor) {
 		const cursor = editor.getCursor("to");
-		const lineText = editor.getLine(cursor.line);
 		const selection = editor.getSelection();
 		const wordRange = editor.wordAt(cursor);
 		const sentenceRange = this.selectSentence(editor, cursor);
-		let end = wordRange ? wordRange.to.ch : cursor.ch;
-		while (end < lineText.length) {
-			end++;
-			const char = lineText.charAt(end);
+		let end: EditorPosition = wordRange
+			? { ...wordRange.to }
+			: { ...cursor };
+		while (end.line <= editor.lastLine()) {
+			end.ch++;
+			if (end.ch > editor.getLine(end.line).length) {
+				end.line++;
+				end.ch = 0;
+			}
+			if (end.line > editor.lastLine()) {
+				end = {
+					line: editor.lastLine(),
+					ch: editor.getLine(editor.lastLine()).length,
+				};
+				return;
+			}
+			const lineText = editor.getLine(end.line);
+			const char = lineText.charAt(end.ch);
+			new Notice(char);
 			if (/\w|[\u4e00-\u9fa5]/.test(char)) break;
 		}
-		editor.setCursor({ ...cursor, ch: end });
+
+		editor.setCursor(end);
 		if (
 			wordRange &&
 			selection.length <= wordRange.to.ch - wordRange.from.ch
@@ -237,11 +265,10 @@ export default class SmartSelectPlugin extends Plugin {
 			this.expandSelection(editor);
 			this.expandSelection(editor);
 		} else {
-			if (cursor.line === editor.lastLine()) return;
-			editor.setCursor({ line: cursor.line + 1, ch: 0 });
 			this.expandSelection(editor);
 			this.expandSelection(editor);
 			this.expandSelection(editor);
 		}
+		this.selectionHistory = [];
 	}
 }
