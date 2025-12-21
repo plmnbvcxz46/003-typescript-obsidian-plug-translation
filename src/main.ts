@@ -36,6 +36,20 @@ export default class SmartSelectPlugin extends Plugin {
 				this.shrinkSelection(editor);
 			},
 		});
+		this.addCommand({
+			id: "select_pre",
+			name: "Select pre",
+			editorCallback: (editor) => {
+				this.selectPre(editor);
+			},
+		});
+		this.addCommand({
+			id: "select_next",
+			name: "Select next",
+			editorCallback: (editor) => {
+				this.selectNext(editor);
+			},
+		});
 	}
 
 	// 插件关闭时执行
@@ -86,7 +100,7 @@ export default class SmartSelectPlugin extends Plugin {
 			wordRange &&
 			selection.length < wordRange.to.ch - wordRange.from.ch
 		) {
-			this.selectionHistory.push({ from: cursor, to: cursor });
+			this.selectionHistory.push(currentRange);
 			editor.setSelection(wordRange.from, wordRange.to);
 			new Notice("Word");
 		} else if (
@@ -162,5 +176,80 @@ export default class SmartSelectPlugin extends Plugin {
 		const rightChar = lineText.charAt(cursor.ch);
 		const chineseRegex = /[\u4e00-\u9fa5]/;
 		return chineseRegex.test(rightChar);
+	}
+
+	//切换选区
+	selectPre(editor: Editor) {
+		const cursor = editor.getCursor("from");
+		const selection = editor.getSelection();
+		const wordRange = editor.wordAt(cursor);
+		let start: EditorPosition = wordRange
+			? { ...wordRange.from }
+			: { ...cursor };
+		while (start.line >= 0) {
+			start.ch--;
+			if (start.ch < 0) {
+				start.line--;
+				start.ch = editor.getLine(
+					start.line >= 0 ? start.line : 0
+				).length;
+			}
+			if (start.line < 0) {
+				start = {
+					line: 0,
+					ch: 0,
+				};
+				return;
+			}
+			const lineText = editor.getLine(start.line);
+			const char = lineText.charAt(start.ch);
+			if (/\w|[\u4e00-\u9fa5]/.test(char)) break;
+		}
+		editor.setCursor(start);
+		if (
+			wordRange &&
+			selection.length <= wordRange.to.ch - wordRange.from.ch
+		) {
+			this.expandSelection(editor);
+		}
+		this.selectionHistory = [];
+	}
+	selectNext(editor: Editor) {
+		const cursor = editor.getCursor("to");
+		const selection = editor.getSelection();
+		const wordRange = editor.wordAt(cursor);
+		let end: EditorPosition = wordRange
+			? { ...wordRange.to }
+			: { ...cursor };
+		while (end.line <= editor.lastLine()) {
+			end.ch++;
+			if (end.ch > editor.getLine(end.line).length) {
+				end.line++;
+				end.ch = 0;
+			}
+			if (end.line > editor.lastLine()) {
+				end = {
+					line: editor.lastLine(),
+					ch: editor.getLine(editor.lastLine()).length,
+				};
+				return;
+			}
+			const lineText = editor.getLine(end.line);
+			const char = lineText.charAt(end.ch);
+			new Notice(char);
+			if (/\w|[\u4e00-\u9fa5]/.test(char)) {
+				new Notice(char);
+				break;
+			}
+		}
+
+		editor.setCursor(end);
+		if (
+			wordRange &&
+			selection.length <= wordRange.to.ch - wordRange.from.ch
+		) {
+			this.expandSelection(editor);
+		}
+		this.selectionHistory = [];
 	}
 }
