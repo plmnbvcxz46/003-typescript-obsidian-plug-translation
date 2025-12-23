@@ -1,6 +1,8 @@
-import { App, PluginSettingTab, Setting } from "obsidian";
-import SmartSelectPlugin from "./main";
-import { apiSetting, modelSetting } from "./type";
+import { App, PluginSettingTab, Setting, DropdownComponent } from "obsidian";
+import SmartSelectPlugin from "../main";
+import { apiSetting, modelSetting } from "../type";
+import { PROVIDERS, getProviderOptions, getModelOptions } from "./providers";
+
 export interface SmartSelectSettings {
 	api: apiSetting;
 	modelSetting: modelSetting;
@@ -9,7 +11,7 @@ export interface SmartSelectSettings {
 export const DEFAULT_SETTINGS: SmartSelectSettings = {
 	api: {
 		modalName: "",
-		provider: "",
+		provider: "deepseek", // 默认选择 deepseek
 		key: "",
 		baseUrl: "",
 	},
@@ -21,6 +23,8 @@ export const DEFAULT_SETTINGS: SmartSelectSettings = {
 
 export class SmartSelectSettingTap extends PluginSettingTab {
 	plugin: SmartSelectPlugin;
+	modelDropdown: DropdownComponent | null = null; // 保存模型下拉框引用
+
 	constructor(app: App, plugin: SmartSelectPlugin) {
 		super(app, plugin);
 		this.plugin = plugin;
@@ -28,62 +32,91 @@ export class SmartSelectSettingTap extends PluginSettingTab {
 
 	display(): void {
 		const { containerEl } = this;
-
 		containerEl.empty();
-		new Setting(containerEl).setName("设置").setHeading();
+
+		// ========== API 设置 ==========
+		new Setting(containerEl).setName("API 设置").setHeading();
+
+		// Provider 选择（放在前面）
 		new Setting(containerEl)
-			.setName("Model name")
-			.setDesc("")
-			.addText((text) =>
-				text
-					.setPlaceholder("Enter your secret")
+			.setName("Provider")
+			.setDesc("选择 AI 服务提供商")
+			.addDropdown((dropDown) => {
+				dropDown
+					.addOptions(getProviderOptions())
+					.setValue(this.plugin.settings.api.provider)
+					.onChange(async (value) => {
+						this.plugin.settings.api.provider = value;
+
+						// 自动填充 baseUrl
+						const provider = PROVIDERS[value];
+						if (provider) {
+							this.plugin.settings.api.baseUrl = provider.baseUrl;
+						}
+
+						// 清空之前选的模型（因为换了 provider）
+						this.plugin.settings.api.modalName = "";
+
+						await this.plugin.saveSettings();
+
+						// 重新渲染整个设置页，更新模型下拉框
+						this.display();
+					});
+			});
+
+		// Model 选择（根据当前 provider 动态显示选项）
+		new Setting(containerEl)
+			.setName("Model")
+			.setDesc("选择要使用的模型")
+			.addDropdown((dropDown) => {
+				this.modelDropdown = dropDown;
+				const currentProvider = this.plugin.settings.api.provider;
+				const modelOptions = getModelOptions(currentProvider);
+
+				dropDown
+					.addOptions(modelOptions)
 					.setValue(this.plugin.settings.api.modalName)
 					.onChange(async (value) => {
 						this.plugin.settings.api.modalName = value;
 						await this.plugin.saveSettings();
-					})
-			);
-		new Setting(containerEl)
-			.setName("Provider")
-			.setDesc("")
-			.addDropdown((dropDown) => {
-				dropDown
-					.addOption("deepseek", "Deepseek")
-					.addOption("openai", "Openai")
-					.setValue(this.plugin.settings.api.provider)
-					.onChange(async (value) => {
-						this.plugin.settings.api.provider = value;
-						await this.plugin.saveSettings();
 					});
 			});
+
+		// API Key
 		new Setting(containerEl)
 			.setName("Key")
-			.setDesc("")
+			.setDesc("你的 API 密钥")
 			.addText((text) => {
 				text.inputEl.type = "password";
-				text.setPlaceholder("Enter your secret")
+				text.setPlaceholder("输入key")
 					.setValue(this.plugin.settings.api.key)
 					.onChange(async (value) => {
 						this.plugin.settings.api.key = value;
 						await this.plugin.saveSettings();
 					});
 			});
+
+		// Base URL
 		new Setting(containerEl)
-			.setName("Baseurl")
-			.setDesc("")
+			.setName("Base URL")
+			.setDesc("Baseurl")
 			.addText((text) =>
 				text
-					.setPlaceholder("Enter your secret")
+					.setPlaceholder("https://api.example.com")
 					.setValue(this.plugin.settings.api.baseUrl)
 					.onChange(async (value) => {
 						this.plugin.settings.api.baseUrl = value;
 						await this.plugin.saveSettings();
 					})
 			);
-		new Setting(containerEl).setName("Model setting").setHeading();
+
+		// ========== 模型设置 ==========
+		new Setting(containerEl).setName("模型设置").setHeading();
+
+		// 温度
 		new Setting(containerEl)
 			.setName("温度")
-			.setDesc("")
+			.setDesc("0 = 更确定性，2 = 更随机/有创意")
 			.addSlider((slider) => {
 				slider
 					.setLimits(0, 2, 0.1)
@@ -94,12 +127,14 @@ export class SmartSelectSettingTap extends PluginSettingTab {
 						await this.plugin.saveSettings();
 					});
 			});
+
+		// 系统提示词
 		new Setting(containerEl)
 			.setName("系统提示词")
-			.setDesc("")
+			.setDesc("设置 AI 的角色和行为")
 			.addTextArea((textArea) => {
 				textArea
-					.setPlaceholder("Enter your instruction")
+					.setPlaceholder("例如：你是一个翻译助手...")
 					.setValue(
 						this.plugin.settings.modelSetting.systemInstruction
 					)

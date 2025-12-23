@@ -5,7 +5,7 @@ import {
 	DEFAULT_SETTINGS,
 	SmartSelectSettings,
 	SmartSelectSettingTap,
-} from "./settings";
+} from "./setting";
 import {
 	expandSelection,
 	shrinkSelection,
