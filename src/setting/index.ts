@@ -57,10 +57,16 @@ export class SmartSelectSettingTap extends PluginSettingTab {
 						// 清空之前选的模型（因为换了 provider）
 						this.plugin.settings.api.modalName = "";
 
-						await this.plugin.saveSettings();
+						// 直接更新 Model 下拉框的选项
+						if (this.modelDropdown) {
+							this.modelDropdown.selectEl.empty(); // 清空旧选项
+							const newOptions = getModelOptions(value);
+							this.modelDropdown.addOptions(newOptions);
+							this.modelDropdown.setValue(""); // 重置选中值
+						}
 
-						// 重新渲染整个设置页，更新模型下拉框
-						this.display();
+						await this.plugin.saveSettings();
+						// 不需要 this.display()
 					});
 			});
 
