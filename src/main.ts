@@ -12,14 +12,16 @@ import {
 	selectPre,
 	selectNext,
 } from "./selection/index";
+import { AIService } from "ai";
 
 export default class SmartSelectPlugin extends Plugin {
 	settings!: SmartSelectSettings;
+	aiService!: AIService;
 	selectionHistory: EditorRange[] = [];
 	lastSelectionSnap: string = "";
 	// 插件加载时执行（相当于游戏的“开始游戏”）
 	async onload() {
-		await this.loadSettings();
+		await this.loadSettingsAndOther();
 
 		// --- 我们的代码将写在这里 ---
 		new Notice("Successfully loding");
@@ -56,6 +58,16 @@ export default class SmartSelectPlugin extends Plugin {
 				selectNext(editor, this);
 			},
 		});
+		this.addCommand({
+			id: "trans",
+			name: "Translation",
+			editorCallback: async (editor) => {
+				const result = await this.aiService.askAI(
+					editor.getSelection()
+				);
+				new Notice(result);
+			},
+		});
 	}
 
 	// 插件关闭时执行
@@ -64,12 +76,13 @@ export default class SmartSelectPlugin extends Plugin {
 	}
 
 	// 加载设置
-	async loadSettings() {
+	async loadSettingsAndOther() {
 		this.settings = Object.assign(
 			{},
 			DEFAULT_SETTINGS,
 			(await this.loadData()) as SmartSelectSettings
 		);
+		this.aiService = new AIService(this);
 	}
 
 	// 保存设置
