@@ -13,6 +13,7 @@ import {
 	selectNext,
 } from "./selection/index";
 import { AIService } from "./ai/index";
+import { VIEW_TYPE_TRANSLATION, aiView } from "./sideBar/index";
 
 export default class SmartSelectPlugin extends Plugin {
 	aiAssistant!: AIService;
@@ -29,6 +30,14 @@ export default class SmartSelectPlugin extends Plugin {
 		// 添加设置页（暂时留着）
 		this.addSettingTab(new SmartSelectSettingTap(this.app, this));
 
+		//视窗
+
+		this.registerView(VIEW_TYPE_TRANSLATION, (leaf) => {
+			return new aiView(leaf);
+		});
+		this.addRibbonIcon("dice", "打开我的侧边栏", async () => {
+			await this.activateView();
+		});
 		// 添加功能
 		this.addCommand({
 			id: "expand_selection",
@@ -90,5 +99,25 @@ export default class SmartSelectPlugin extends Plugin {
 	// 保存设置
 	async saveSettings() {
 		await this.saveData(this.settings);
+	}
+	async activateView() {
+		const { workspace } = this.app;
+
+		let leaf = workspace.getLeavesOfType(VIEW_TYPE_TRANSLATION)[0];
+
+		if (!leaf) {
+			leaf = workspace.getRightLeaf(false) ?? undefined;
+			if (!leaf) {
+				new Notice("无法获取视窗");
+				return;
+			}
+
+			await leaf.setViewState({
+				type: VIEW_TYPE_TRANSLATION,
+				active: true,
+			});
+		}
+
+		await workspace.revealLeaf(leaf);
 	}
 }
