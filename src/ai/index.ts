@@ -11,7 +11,7 @@ export class AIService {
 		this.openai.apiKey = key;
 		this.openai.baseURL = baseUrl;
 	}
-	async askAI(prompt: string): Promise<string> {
+	async askAI(prompt: string) {
 		const modelSetting = this.plugin.settings.modelSetting;
 		try {
 			const completion = await this.openai.chat.completions.create({
