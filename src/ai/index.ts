@@ -8,8 +8,11 @@ export class AIService {
 	constructor(plugin: SmartSelectPlugin) {
 		const { key, baseUrl }: apiSetting = plugin.settings.api;
 		this.plugin = plugin;
-		this.openai.apiKey = key;
-		this.openai.baseURL = baseUrl;
+		this.openai = new OpenAI({
+			apiKey: key,
+			baseURL: baseUrl,
+			dangerouslyAllowBrowser: true,
+		});
 	}
 	async askAI(prompt: string) {
 		const modelSetting = this.plugin.settings.modelSetting;
