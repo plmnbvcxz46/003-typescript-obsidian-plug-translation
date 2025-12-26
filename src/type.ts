@@ -15,6 +15,7 @@ export type { apiSetting, modelSetting };
 interface BaseNode {
 	original: string;
 	translation: string;
+	example: string | null;
 }
 
 export interface WordNode extends BaseNode {
